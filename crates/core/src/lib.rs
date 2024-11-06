@@ -8,9 +8,10 @@ use base64::prelude::*;
 use cfdkim::canonicalize_signed_email;
 use dns_resolver::DkimResolver;
 use mail_parser::{HeaderValue, MessageParser};
+use regex_automata::{dfa::dense, Match};
 use rsa::{pkcs8::DecodePublicKey, signature::digest::Digest, Pkcs1v15Sign, RsaPublicKey};
 use sha2::Sha256;
-use std::collections::HashMap;
+use std::{collections::HashMap, str};
 
 /// RSA-SHA256 signature prefix for PKCS#1 v1.5 padding
 const RSA_SHA256_PREFIX: [u8; 19] = [
@@ -96,6 +97,54 @@ impl EmailVerifier {
         Ok(computed_hash == body_hash)
     }
 
+    /// ZkVM-friendly pattern matching using pre-compiled DFAs
+    ///
+    /// # Arguments
+    /// * `dfa_fwd` - Forward DFA bytes in little-endian format
+    /// * `dfa_rev` - Reverse DFA bytes in little-endian format
+    /// * `in_headers` - Whether to search in headers (true) or body (false)
+    /// * `reveal` - Whether to return the matched content
+    ///
+    /// # Returns
+    /// * `Result<Option<String>>` - Matched text if found and reveal=true
+    pub fn verify_pattern(
+        &self,
+        dfa_fwd: &[u8],
+        dfa_rev: &[u8],
+        in_headers: bool,
+        reveal: bool,
+    ) -> Result<Option<String>> {
+        let fwd: dense::DFA<&[u32]> = dense::DFA::from_bytes(dfa_fwd)
+            .context("Failed to load forward DFA")?
+            .0;
+        let rev: dense::DFA<&[u32]> = dense::DFA::from_bytes(dfa_rev)
+            .context("Failed to load reverse DFA")?
+            .0;
+
+        let re = regex_automata::dfa::regex::Regex::builder().build_from_dfas(fwd, rev);
+
+        let text = if in_headers {
+            &self.canonicalized_header
+        } else {
+            &self.canonicalized_body
+        };
+        let matches: Vec<Match> = re.find_iter(text).collect();
+
+        if !matches.is_empty() {
+            if reveal {
+                let m = matches[0];
+                let matched = &text[m.start()..m.end()];
+                String::from_utf8(matched.to_vec())
+                    .context("Invalid UTF-8 in matched text")
+                    .map(Some)
+            } else {
+                Ok(Some("Pattern found but not revealed".to_string()))
+            }
+        } else {
+            Ok(None)
+        }
+    }
+
     // Private helper methods
     fn extract_dkim_fields(eml_content: &[u8]) -> Result<HashMap<String, String>> {
         let message = MessageParser::default()
@@ -153,6 +202,7 @@ impl EmailVerifier {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use regex_automata::dfa::regex::Regex as DfaRegex;
     use std::fs;
 
     #[tokio::test]
@@ -166,6 +216,43 @@ mod tests {
             "Signature verification failed"
         );
         assert!(verifier.verify_body()?, "Body verification failed");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_pattern() -> Result<()> {
+        let eml_content =
+            fs::read("./test_emails/test.eml").context("Failed to read test email")?;
+        let verifier = EmailVerifier::from_eml(&eml_content).await?;
+
+        // Test for reset code
+        let pattern = r"t7bezzrn"; // The actual reset code from the email
+        let dfa = DfaRegex::new(pattern)?;
+        let fwd_bytes = dfa.forward().to_bytes_native_endian().0;
+        let rev_bytes = dfa.reverse().to_bytes_native_endian().0;
+
+        let result = verifier.verify_pattern(
+            &fwd_bytes, &rev_bytes, false, // search in body
+            true,  // reveal match
+        )?;
+
+        assert!(result.is_some(), "Reset code should be found");
+        assert_eq!(result.unwrap(), "t7bezzrn", "Should match exact reset code");
+
+        // Test for username
+        let pattern = r"@0xDMello"; // The username from the email
+        let dfa = DfaRegex::new(pattern)?;
+        let fwd_bytes = dfa.forward().to_bytes_native_endian().0;
+        let rev_bytes = dfa.reverse().to_bytes_native_endian().0;
+
+        let result = verifier.verify_pattern(
+            &fwd_bytes, &rev_bytes, false, // search in body
+            true,  // reveal match
+        )?;
+
+        assert!(result.is_some(), "Username should be found");
+        assert_eq!(result.unwrap(), "@0xDMello", "Should match exact username");
 
         Ok(())
     }
