@@ -21,3 +21,13 @@ zkemail_helpers = { path = "helpers" }
 [patch.crates-io]
 sha2 = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.6-risczero.0" }
 rsa = { git = "https://www.github.com/risc0/RustCrypto-RSA.git", tag = "v0.9.6-risczero.0" }
+
+[profile.dev]
+opt-level = 3
+
+[profile.release]
+opt-level = 3       
+debug = false      
+lto = true        
+codegen-units = 1  
+panic = "abort" 
