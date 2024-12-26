@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-cfdkim = { workspace = true }
+cfdkim = { workspace = true, features = [] }
 mailparse = { workspace = true }
 regex-automata = { workspace = true }
 rsa = { workspace = true }
