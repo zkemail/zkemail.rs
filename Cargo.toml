@@ -4,7 +4,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
-cfdkim = { git = "https://github.com/risc0-labs/dkim", default-features = false, features = ["dns"] }
+cfdkim = { git = "https://github.com/risc0-labs/dkim", default-features = false }
 log = "0.4.22"
 mailparse = "0.14.0"
 regex-automata = "0.4.8"

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-cfdkim = { workspace = true } 
+cfdkim = { workspace = true, features = ["dns"] } 
 log = { workspace = true }
 mailparse = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
