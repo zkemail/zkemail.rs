@@ -1,0 +1,16 @@
+[package]
+name = "zkemail_helpers"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+cfdkim = { workspace = true } 
+log = { workspace = true }
+mailparse = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+slog = { workspace = true }
+regex-automata = { workspace = true }
+trust-dns-resolver = { workspace = true }
+zkemail_core = { workspace = true }

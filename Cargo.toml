@@ -1,5 +1,23 @@
 [workspace]
-members = [
-    "crates/core"
-]
+members = [ "core", "helpers" ]
 resolver = "2"
+
+[workspace.dependencies]
+anyhow = "1.0"
+cfdkim = { git = "https://github.com/risc0-labs/dkim", default-features = false, features = ["dns"] }
+log = "0.4.22"
+mailparse = "0.14.0"
+regex-automata = "0.4.8"
+rsa = "=0.9.6"
+serde = "1.0"
+serde_json = "1.0"
+sha2 = "0.10"
+slog = "2.7.0"
+trust-dns-resolver = "0.23.2"
+
+zkemail_core = { path = "core" }
+zkemail_helpers = { path = "helpers" }
+
+[patch.crates-io]
+sha2 = { git = "https://github.com/risc0/RustCrypto-hashes", tag = "sha2-v0.10.6-risczero.0" }
+rsa = { git = "https://www.github.com/risc0/RustCrypto-RSA.git", tag = "v0.9.6-risczero.0" }

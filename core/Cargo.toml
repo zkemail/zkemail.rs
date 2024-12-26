@@ -1,0 +1,13 @@
+[package]
+name = "zkemail_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cfdkim = { workspace = true }
+mailparse = { workspace = true }
+regex-automata = { workspace = true }
+rsa = { workspace = true }
+serde = { workspace = true }
+sha2 = { workspace = true }
+slog = { workspace = true }
