@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+borsh = { workspace = true }
 cfdkim = { workspace = true, features = [] }
 mailparse = { workspace = true }
 regex-automata = { workspace = true }

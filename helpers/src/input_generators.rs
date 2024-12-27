@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use cfdkim::{
     dns::from_tokio_resolver, public_key::retrieve_public_key, validate_header,
     verify_email_with_resolver,
@@ -6,13 +6,13 @@ use cfdkim::{
 use log::{debug, error, info, warn};
 use mailparse::MailHeaderMap;
 use regex_automata::{dfa::regex::Regex as DFARegex, meta::Regex as MetaRegex};
-use slog::{Discard, Logger, o};
+use slog::{o, Discard, Logger};
 use std::{fs::File, io::Read, path::PathBuf};
 use trust_dns_resolver::{
-    TokioAsyncResolver,
     config::{NameServerConfigGroup, ResolverConfig, ResolverOpts},
+    TokioAsyncResolver,
 };
-use zkemail_core::{CompiledRegex, DFA, Email, EmailWithRegex, PublicKey, RegexInfo};
+use zkemail_core::{CompiledRegex, Email, EmailWithRegex, PublicKey, RegexInfo, DFA};
 
 use crate::structs::{RegexConfig, RegexPattern};
 

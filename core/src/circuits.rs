@@ -1,9 +1,9 @@
 use mailparse::parse_mail;
-use slog::{Discard, Logger, o};
+use slog::{o, Discard, Logger};
 
 use crate::{
-    Email, EmailVerifierOutput, EmailWithRegex, EmailWithRegexVerifierOutput, extract_email_body,
-    hash_bytes, process_regex_parts, verify_dkim,
+    extract_email_body, hash_bytes, process_regex_parts, verify_dkim, Email, EmailVerifierOutput,
+    EmailWithRegex, EmailWithRegexVerifierOutput,
 };
 
 pub fn verify_email(email: &Email) -> EmailVerifierOutput {

@@ -1,5 +1,5 @@
-use cfdkim::{DkimPublicKey, verify_email_with_key};
-use mailparse::{ParsedMail, parse_mail};
+use cfdkim::{verify_email_with_key, DkimPublicKey};
+use mailparse::{parse_mail, ParsedMail};
 use regex_automata::dfa::{dense, regex::Regex};
 use sha2::{Digest, Sha256};
 use slog::Logger;
