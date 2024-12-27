@@ -16,8 +16,8 @@ sha2 = "0.10"
 slog = "2.7.0"
 trust-dns-resolver = "0.23.2"
 
-zkemail_core = { path = "core" }
-zkemail_helpers = { path = "helpers" }
+zkemail-core = { path = "core" }
+zkemail-helpers = { path = "helpers" }
 
 [profile.dev]
 opt-level = 3

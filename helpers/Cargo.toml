@@ -1,5 +1,5 @@
 [package]
-name = "zkemail_helpers"
+name = "zkemail-helpers"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,4 +13,4 @@ serde_json = { workspace = true }
 slog = { workspace = true }
 regex-automata = { workspace = true }
 trust-dns-resolver = { workspace = true }
-zkemail_core = { workspace = true }
+zkemail-core = { workspace = true }
