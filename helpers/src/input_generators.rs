@@ -16,13 +16,13 @@ use zkemail_core::{CompiledRegex, Email, EmailWithRegex, PublicKey, RegexInfo, D
 
 use crate::structs::{RegexConfig, RegexPattern};
 
-pub fn read_email_file(path: &PathBuf) -> Result<String> {
+pub fn read_email_file(path: &PathBuf) -> Result<Vec<u8>> {
     use std::io::BufReader;
     let file = File::open(path).map_err(|e| anyhow!("Failed to open email file: {}", e))?;
     let mut buf_reader = BufReader::new(file);
-    let mut contents = String::new();
+    let mut contents = Vec::new();
     buf_reader
-        .read_to_string(&mut contents)
+        .read_to_end(&mut contents)
         .map_err(|e| anyhow!("Failed to read email contents: {}", e))?;
     Ok(contents)
 }
@@ -32,6 +32,15 @@ pub fn read_regex_config(path: &PathBuf) -> Result<RegexConfig> {
     let config: RegexConfig =
         serde_json::from_reader(file).map_err(|e| anyhow!("Failed to read regex config: {}", e))?;
     Ok(config)
+}
+
+fn create_dfa(re: &DFARegex) -> DFA {
+    let (fwd, fwd_pad) = re.forward().to_bytes_little_endian();
+    let (bwd, bwd_pad) = re.reverse().to_bytes_little_endian();
+    DFA {
+        fwd: fwd[fwd_pad..].to_vec(),
+        bwd: bwd[bwd_pad..].to_vec(),
+    }
 }
 
 fn compile_regex_parts(parts: &[RegexPattern], input: &[u8]) -> Result<Vec<CompiledRegex>> {
@@ -45,10 +54,7 @@ fn compile_regex_parts(parts: &[RegexPattern], input: &[u8]) -> Result<Vec<Compi
                 }
 
                 Ok(CompiledRegex {
-                    verify_re: DFA {
-                        fwd: verify_dfa_re.forward().to_bytes_little_endian().0,
-                        bwd: verify_dfa_re.reverse().to_bytes_little_endian().0,
-                    },
+                    verify_re: create_dfa(&verify_dfa_re),
                     capture_str: None,
                 })
             }
@@ -71,15 +77,11 @@ fn compile_regex_parts(parts: &[RegexPattern], input: &[u8]) -> Result<Vec<Compi
 
                 let capture_str = caps
                     .get_group(2)
-                    .and_then(|capture| std::str::from_utf8(&input[capture.range()]).ok())
-                    .map(String::from)
-                    .ok_or_else(|| anyhow!("No capture found"))?;
+                    .and_then(|capture| String::from_utf8(input[capture.range()].to_vec()).ok())
+                    .ok_or_else(|| anyhow!("Capture contains invalid UTF-8 data"))?;
 
                 Ok(CompiledRegex {
-                    verify_re: DFA {
-                        fwd: verify_dfa_re.forward().to_bytes_little_endian().0,
-                        bwd: verify_dfa_re.reverse().to_bytes_little_endian().0,
-                    },
+                    verify_re: create_dfa(&verify_dfa_re),
                     capture_str: Some(capture_str),
                 })
             }
@@ -105,8 +107,8 @@ fn extract_email_body(email: &mailparse::ParsedMail) -> Result<Vec<u8>> {
 pub async fn generate_email_inputs(from_domain: &str, email_path: &PathBuf) -> Result<Email> {
     let logger = Logger::root(Discard, o!());
     let raw_email = read_email_file(email_path)?;
-    let email = mailparse::parse_mail(raw_email.as_bytes())
-        .map_err(|e| anyhow!("Failed to parse email: {}", e))?;
+    let email =
+        mailparse::parse_mail(&raw_email).map_err(|e| anyhow!("Failed to parse email: {}", e))?;
 
     debug!("Looking for DKIM signatures...");
     let dkim_headers = email.headers.get_all_headers("DKIM-Signature");
@@ -179,7 +181,7 @@ pub async fn generate_email_inputs(from_domain: &str, email_path: &PathBuf) -> R
 
             let email_inputs = Email {
                 from_domain: from_domain.to_string(),
-                raw_email: raw_email.as_bytes().to_vec(),
+                raw_email,
                 public_key: PublicKey {
                     key: extracted_public_key.ok_or_else(|| anyhow!("No public key extracted"))?,
                     key_type: key_type.ok_or_else(|| anyhow!("No key type found"))?,

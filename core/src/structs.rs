@@ -1,38 +1,51 @@
+#[cfg(feature = "risc0")]
 use borsh::{BorshDeserialize, BorshSerialize};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct PublicKey {
     pub key: Vec<u8>,
     pub key_type: String,
 }
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct DFA {
     pub fwd: Vec<u8>,
     pub bwd: Vec<u8>,
 }
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct CompiledRegex {
     pub verify_re: DFA,
     pub capture_str: Option<String>,
 }
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct RegexInfo {
     pub header_parts: Vec<CompiledRegex>,
     pub body_parts: Vec<CompiledRegex>,
 }
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct Email {
     pub from_domain: String,
     pub raw_email: Vec<u8>,
     pub public_key: PublicKey,
 }
 
-#[derive(Debug, BorshSerialize, BorshDeserialize)]
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug)]
 pub struct EmailWithRegex {
     pub email: Email,
     pub regex_info: RegexInfo,

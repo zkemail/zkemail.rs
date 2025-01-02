@@ -30,6 +30,16 @@ pub fn extract_email_body(parsed_email: &ParsedMail) -> Vec<u8> {
         )
 }
 
+#[cfg(feature = "sp1")]
+fn align_slice(bytes: &[u8]) -> Vec<u8> {
+    let mut aligned = Vec::with_capacity(bytes.len() + 4);
+    let offset = (aligned.as_ptr() as usize) % 4;
+    let padding = vec![0; if offset == 0 { 0 } else { 4 - offset }];
+    aligned.extend_from_slice(&padding);
+    aligned.extend_from_slice(bytes);
+    aligned
+}
+
 pub fn process_regex_parts(
     compiled_regexes: &[CompiledRegex],
     input: &[u8],
@@ -41,9 +51,19 @@ pub fn process_regex_parts(
     let mut regex_matches = Vec::with_capacity(capture_count);
 
     for part in compiled_regexes {
-        let fwd = dense::DFA::from_bytes(&part.verify_re.fwd).unwrap().0;
-        let rev = dense::DFA::from_bytes(&part.verify_re.bwd).unwrap().0;
-        let re = Regex::builder().build_from_dfas(fwd, rev);
+        #[cfg(feature = "sp1")]
+        let fwd = align_slice(&part.verify_re.fwd);
+        #[cfg(not(feature = "sp1"))]
+        let fwd = &part.verify_re.fwd;
+
+        #[cfg(feature = "sp1")]
+        let bwd = align_slice(&part.verify_re.bwd);
+        #[cfg(not(feature = "sp1"))]
+        let bwd = &part.verify_re.bwd;
+
+        let fwd = dense::DFA::from_bytes(&fwd).unwrap().0;
+        let bwd = dense::DFA::from_bytes(&bwd).unwrap().0;
+        let re = Regex::builder().build_from_dfas(fwd, bwd);
 
         let matches: Vec<_> = re.find_iter(input).collect();
         if matches.len() != 1 {

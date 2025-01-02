@@ -3,6 +3,11 @@ name = "zkemail-core"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+sp1 = []
+risc0 = []
+
 [dependencies]
 borsh = { workspace = true }
 cfdkim = { workspace = true, features = [] }
