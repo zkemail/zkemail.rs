@@ -21,7 +21,7 @@ pub fn extract_email_body(parsed_email: &ParsedMail) -> Vec<u8> {
             || {
                 parsed_email
                     .subparts
-                    .get(0)
+                    .first()
                     .map_or(parsed_email.get_body_raw().unwrap(), |part| {
                         part.get_body_raw().unwrap()
                     })
@@ -54,12 +54,12 @@ pub fn process_regex_parts(
         #[cfg(feature = "sp1")]
         let fwd = align_slice(&part.verify_re.fwd);
         #[cfg(not(feature = "sp1"))]
-        let fwd = &part.verify_re.fwd;
+        let fwd = part.verify_re.fwd.clone();
 
         #[cfg(feature = "sp1")]
         let bwd = align_slice(&part.verify_re.bwd);
         #[cfg(not(feature = "sp1"))]
-        let bwd = &part.verify_re.bwd;
+        let bwd = part.verify_re.bwd.clone();
 
         let fwd = dense::DFA::from_bytes(&fwd).unwrap().0;
         let bwd = dense::DFA::from_bytes(&bwd).unwrap().0;
