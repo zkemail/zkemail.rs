@@ -1,7 +1,11 @@
 mod circuits;
+mod crypto;
+mod email;
+mod regex;
 mod structs;
-mod utils;
 
 pub use circuits::*;
+pub use crypto::*;
+pub use email::*;
+pub use regex::*;
 pub use structs::*;
-pub use utils::*;

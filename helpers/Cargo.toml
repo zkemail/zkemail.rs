@@ -3,10 +3,6 @@ name = "zkemail-helpers"
 version = "0.1.0"
 edition = "2021"
 
-[features]
-default = []
-sp1 = []
-
 [dependencies]
 anyhow = { workspace = true }
 cfdkim = { workspace = true, features = ["dns"] } 

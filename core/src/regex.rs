@@ -1,34 +1,6 @@
-use cfdkim::{verify_email_with_key, DkimPublicKey};
-use mailparse::{parse_mail, ParsedMail};
 use regex_automata::dfa::{dense, regex::Regex};
-use sha2::{Digest, Sha256};
-use slog::Logger;
 
-use crate::{CompiledRegex, Email};
-
-pub fn hash_bytes(data: &[u8]) -> Vec<u8> {
-    let mut hasher = Sha256::new();
-    hasher.update(data);
-    hasher.finalize().to_vec()
-}
-
-pub fn extract_email_body(parsed_email: &ParsedMail) -> Vec<u8> {
-    parsed_email
-        .subparts
-        .iter()
-        .find(|part| part.ctype.mimetype == "text/html")
-        .map_or_else(
-            || {
-                parsed_email
-                    .subparts
-                    .first()
-                    .map_or(parsed_email.get_body_raw().unwrap(), |part| {
-                        part.get_body_raw().unwrap()
-                    })
-            },
-            |part| part.get_body_raw().unwrap(),
-        )
-}
+use crate::CompiledRegex;
 
 #[cfg(feature = "sp1")]
 fn align_slice(bytes: &[u8]) -> Vec<u8> {
@@ -80,16 +52,4 @@ pub fn process_regex_parts(
     }
 
     (true, regex_matches)
-}
-
-pub fn verify_dkim(input: &Email, logger: &Logger) -> bool {
-    let parsed_email = parse_mail(&input.raw_email).unwrap();
-
-    let public_key =
-        DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type).unwrap();
-
-    let result =
-        verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key).unwrap();
-
-    result.with_detail().starts_with("pass")
 }
