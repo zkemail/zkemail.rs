@@ -1,3 +1,4 @@
+mod dkim;
 mod email;
 mod file;
 mod generator;
