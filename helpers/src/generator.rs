@@ -31,7 +31,7 @@ pub async fn generate_email_inputs(from_domain: &str, email_path: &PathBuf) -> R
         };
 
         let selector = dkim_header.get_required_tag("s");
-        if let Ok((key, key_type)) = fetch_dkim_key(from_domain, &selector).await {
+        if let Ok((key, key_type)) = fetch_dkim_key(&logger, from_domain, &selector).await {
             if let Ok(public_key) = DkimPublicKey::try_from_bytes(&key, &key_type) {
                 if let Ok(result) = verify_email_with_key(&logger, from_domain, &email, public_key)
                 {
