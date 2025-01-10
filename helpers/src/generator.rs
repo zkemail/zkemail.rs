@@ -2,12 +2,10 @@ use anyhow::{anyhow, Result};
 use cfdkim::{validate_header, verify_email_with_key, DkimPublicKey};
 use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
-use std::path::PathBuf;
 use zkemail_core::{Email, EmailWithRegex, PublicKey, RegexInfo};
 
 use crate::{
-    dkim::fetch_dkim_key, email::extract_email_body, file::read_regex_config,
-    regex::compile_regex_parts,
+    dkim::fetch_dkim_key, email::extract_email_body, regex::compile_regex_parts, RegexConfig,
 };
 
 pub async fn generate_email_inputs(from_domain: &str, raw_email: &[u8]) -> Result<Email> {
@@ -50,7 +48,7 @@ pub async fn generate_email_inputs(from_domain: &str, raw_email: &[u8]) -> Resul
 pub async fn generate_email_with_regex_inputs(
     from_domain: &str,
     raw_email: &[u8],
-    config_path: &PathBuf,
+    regex_config: &RegexConfig,
 ) -> Result<EmailWithRegex> {
     let email_inputs = generate_email_inputs(from_domain, raw_email).await?;
     let email = mailparse::parse_mail(&email_inputs.raw_email)?;
@@ -58,7 +56,6 @@ pub async fn generate_email_with_regex_inputs(
     let header_bytes = email.get_headers().get_raw_bytes();
     let email_body = extract_email_body(&email)?;
 
-    let regex_config = read_regex_config(config_path)?;
     let body_parts = compile_regex_parts(&regex_config.body_parts, &email_body)?;
     let header_parts = compile_regex_parts(&regex_config.header_parts, header_bytes)?;
 
