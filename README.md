@@ -1,55 +1,48 @@
 # ZkEmail.rs
 
-This repository contains the core ZkEmail Rust library along with implementations for various ZK Virtual Machines (ZKVMs).
+Zero-knowledge proof system for email verification, with support for DKIM signatures and regex pattern matching.
 
-## Overview
+## Installation
 
-ZkEmail is a library for email-based zero-knowledge proofs, allowing verification of email contents while preserving privacy. This monorepo contains both the core library and various ZKVM implementations.
-
-## Repository Structure
-
-```
-zkemail/
-├── crates/
-│   ├── core/          # Core ZkEmail library
-│   ├── sp1/           # SP1 ZKVM implementation
-│   └── common/        # Shared utilities and types
+```toml
+zkemail_core = { git = "https://github.com/zkemail/zkemail.rs" }
+zkemail_helpers = { git = "https://github.com/zkemail/zkemail.rs" }
 ```
 
-## Implementations
+### Core (`zkemail_core`)
 
--   **Core Library**: The foundation of ZkEmail, providing email parsing, cryptographic primitives, and proof generation interfaces
--   **SP1**: Implementation using [SP1](https://github.com/succinctlabs/sp1), a RISC-V based zkVM
+Low-level library providing:
 
-## Getting Started
+-   Email verification primitives
+-   DKIM signature validation
+-   Regex pattern matching
+-   Core data structures for email proofs
+-   Circuit implementations
 
-### Prerequisites
+### Helpers (`zkemail_helpers`)
 
--   Rust (latest stable)
--   Cargo
--   Additional requirements vary by ZKVM implementation
+High-level utilities for:
 
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/zkemail/zkemail.rs
-cd zkemail.rs
-
-# Build all crates
-cargo build
-```
-
-### Running Tests
-
-```bash
-cargo test --workspace
-```
+-   Email input generation and parsing
+-   DNS resolution for DKIM keys
+-   Regex compilation and pattern matching
+-   Configuration management
 
 ## Usage
 
-Each ZKVM implementation has its own specific usage pattern. See the README in each crate's directory for detailed instructions.
+```rust
+use zkemail_core::{verify_email, verify_email_with_regex};
+use zkemail_helpers::{generate_email_inputs, generate_email_with_regex_inputs};
 
-## Contributing
+// Basic email verification
+let email = generate_email_inputs("example.com", "email.txt").await?;
+let result = verify_email(&email);
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+// Email verification with regex matching
+let input = generate_email_with_regex_inputs(
+    "example.com",
+    "email.txt",
+    "regex_config.json"
+).await?;
+let result = verify_email_with_regex(&input);
+```
