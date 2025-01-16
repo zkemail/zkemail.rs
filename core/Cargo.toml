@@ -9,6 +9,7 @@ sp1 = []
 risc0 = []
 
 [dependencies]
+alloy-sol-types = { workspace = true }
 borsh = { workspace = true }
 cfdkim = { workspace = true, features = [] }
 mailparse = { workspace = true }
