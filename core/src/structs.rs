@@ -30,8 +30,8 @@ pub struct CompiledRegex {
 #[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
 #[derive(Debug)]
 pub struct RegexInfo {
-    pub header_parts: Vec<CompiledRegex>,
-    pub body_parts: Vec<CompiledRegex>,
+    pub header_parts: Option<Vec<CompiledRegex>>,
+    pub body_parts: Option<Vec<CompiledRegex>>,
 }
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
@@ -55,14 +55,10 @@ pub struct EmailWithRegex {
 pub struct EmailVerifierOutput {
     pub from_domain_hash: Vec<u8>,
     pub public_key_hash: Vec<u8>,
-    pub verified: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmailWithRegexVerifierOutput {
     pub email: EmailVerifierOutput,
-    pub header_regex_verified: bool,
-    pub body_regex_verified: bool,
-    pub header_regex_matches: Vec<String>,
-    pub body_regex_matches: Vec<String>,
+    pub regex_matches: Vec<String>,
 }

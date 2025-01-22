@@ -56,8 +56,18 @@ pub async fn generate_email_with_regex_inputs(
     let header_bytes = email.get_headers().get_raw_bytes();
     let email_body = extract_email_body(&email)?;
 
-    let body_parts = compile_regex_parts(&regex_config.body_parts, &email_body)?;
-    let header_parts = compile_regex_parts(&regex_config.header_parts, header_bytes)?;
+    let body_parts = regex_config
+        .body_parts
+        .as_ref()
+        .filter(|parts| !parts.is_empty())
+        .map(|parts| compile_regex_parts(parts, &email_body))
+        .transpose()?;
+    let header_parts = regex_config
+        .header_parts
+        .as_ref()
+        .filter(|parts| !parts.is_empty())
+        .map(|parts| compile_regex_parts(parts, header_bytes))
+        .transpose()?;
 
     Ok(EmailWithRegex {
         email: email_inputs,

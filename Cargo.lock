@@ -3502,6 +3502,7 @@ dependencies = [
 name = "zkemail-helpers"
 version = "0.1.0"
 dependencies = [
+ "alloy-sol-types",
  "anyhow",
  "base64 0.22.1",
  "cfdkim",

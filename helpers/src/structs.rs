@@ -14,6 +14,6 @@ pub enum RegexPattern {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegexConfig {
-    pub header_parts: Vec<RegexPattern>,
-    pub body_parts: Vec<RegexPattern>,
+    pub header_parts: Option<Vec<RegexPattern>>,
+    pub body_parts: Option<Vec<RegexPattern>>,
 }
