@@ -15,6 +15,16 @@ pub fn verify_email(email: &Email) -> EmailVerifierOutput {
     EmailVerifierOutput {
         from_domain_hash: hash_bytes(email.from_domain.as_bytes()),
         public_key_hash: hash_bytes(&email.public_key.key),
+        external_inputs: email
+            .external_inputs
+            .iter()
+            .flat_map(|inputs| {
+                vec![
+                    inputs.name.clone(),
+                    inputs.value.clone().expect("Value cannot be null"),
+                ]
+            })
+            .collect(),
     }
 }
 

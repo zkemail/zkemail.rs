@@ -6,6 +6,7 @@ sol!(
     struct SolEmailOutput {
         bytes32 from_domain_hash;
         bytes32 public_key_hash;
+        string[] external_inputs; // [name1, value1, name2, value2, ...]
     }
 
     struct SolEmailWithRegexOutput {
@@ -47,5 +48,6 @@ fn convert_email(email: &EmailVerifierOutput) -> SolEmailOutput {
     SolEmailOutput {
         from_domain_hash: email.from_domain_hash.as_slice().try_into().unwrap(),
         public_key_hash: email.public_key_hash.as_slice().try_into().unwrap(),
+        external_inputs: email.external_inputs.clone(),
     }
 }

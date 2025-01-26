@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PublicKey {
     pub key: Vec<u8>,
     pub key_type: String,
@@ -36,11 +36,21 @@ pub struct RegexInfo {
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
 #[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub struct ExternalInput {
+    pub name: String,
+    pub value: Option<String>,
+    pub max_length: usize,
+}
+
+#[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
+#[cfg_attr(feature = "sp1", derive(Serialize, Deserialize))]
+#[derive(Debug, Clone)]
 pub struct Email {
     pub from_domain: String,
     pub raw_email: Vec<u8>,
     pub public_key: PublicKey,
+    pub external_inputs: Vec<ExternalInput>,
 }
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
@@ -55,6 +65,7 @@ pub struct EmailWithRegex {
 pub struct EmailVerifierOutput {
     pub from_domain_hash: Vec<u8>,
     pub public_key_hash: Vec<u8>,
+    pub external_inputs: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

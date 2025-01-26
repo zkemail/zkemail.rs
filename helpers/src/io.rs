@@ -15,6 +15,7 @@ impl AbiDecodable for VerificationOutput {
             return Ok(Self::EmailOnly(EmailVerifierOutput {
                 from_domain_hash: email.from_domain_hash.to_vec(),
                 public_key_hash: email.public_key_hash.to_vec(),
+                external_inputs: email.external_inputs.clone(),
             }));
         }
 
@@ -23,6 +24,7 @@ impl AbiDecodable for VerificationOutput {
             email: EmailVerifierOutput {
                 from_domain_hash: regex.email.from_domain_hash.to_vec(),
                 public_key_hash: regex.email.public_key_hash.to_vec(),
+                external_inputs: regex.email.external_inputs.clone(),
             },
             matches: regex.matches,
         })

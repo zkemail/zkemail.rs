@@ -1,10 +1,7 @@
 use anyhow::{anyhow, Result};
-use std::{fs::File, io::Read, path::PathBuf};
-
-use crate::structs::RegexConfig;
+use std::{fs::File, io::BufReader, io::Read, path::PathBuf};
 
 pub fn read_email_file(path: &PathBuf) -> Result<Vec<u8>> {
-    use std::io::BufReader;
     let file = File::open(path).map_err(|e| anyhow!("Failed to open email file: {}", e))?;
     let mut buf_reader = BufReader::new(file);
     let mut contents = Vec::new();
@@ -14,9 +11,13 @@ pub fn read_email_file(path: &PathBuf) -> Result<Vec<u8>> {
     Ok(contents)
 }
 
-pub fn read_regex_config(path: &PathBuf) -> Result<RegexConfig> {
-    let file = File::open(path).map_err(|e| anyhow!("Failed to open regex config file: {}", e))?;
-    let config: RegexConfig =
-        serde_json::from_reader(file).map_err(|e| anyhow!("Failed to read regex config: {}", e))?;
-    Ok(config)
+pub fn read_json_file<T>(path: &PathBuf) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let file =
+        File::open(path).map_err(|e| anyhow!("Failed to open file {}: {}", path.display(), e))?;
+
+    serde_json::from_reader(file)
+        .map_err(|e| anyhow!("Failed to parse JSON from {}: {}", path.display(), e))
 }
