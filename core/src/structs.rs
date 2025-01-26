@@ -32,6 +32,7 @@ pub struct CompiledRegex {
 pub struct RegexInfo {
     pub header_parts: Option<Vec<CompiledRegex>>,
     pub body_parts: Option<Vec<CompiledRegex>>,
+    pub pdf_parts: Option<Vec<CompiledRegex>>,
 }
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]

@@ -16,4 +16,5 @@ pub enum RegexPattern {
 pub struct RegexConfig {
     pub header_parts: Option<Vec<RegexPattern>>,
     pub body_parts: Option<Vec<RegexPattern>>,
+    pub pdf_parts: Option<Vec<RegexPattern>>,
 }

@@ -45,6 +45,7 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
             assert!(verified);
             matches
         });
+
     let body_matches = input
         .regex_info
         .body_parts
@@ -55,9 +56,20 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
             matches
         });
 
+    let pdf_matches = input
+        .regex_info
+        .pdf_parts
+        .as_ref()
+        .map(|parts| process_regex_parts(parts, &email_body))
+        .map(|(verified, matches)| {
+            assert!(verified);
+            matches
+        });
+
     let regex_matches = header_matches
         .into_iter()
         .chain(body_matches.into_iter())
+        .chain(pdf_matches.into_iter())
         .flatten()
         .collect();
 

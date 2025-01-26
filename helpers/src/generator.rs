@@ -2,7 +2,9 @@ use anyhow::{anyhow, Result};
 use cfdkim::{validate_header, verify_email_with_key, DkimPublicKey};
 use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
-use zkemail_core::{Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo};
+use zkemail_core::{
+    extract_pdf_content, get_pdf, Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo,
+};
 
 use crate::{
     dkim::fetch_dkim_key, email::extract_email_body, regex::compile_regex_parts, RegexConfig,
@@ -62,6 +64,9 @@ pub async fn generate_email_with_regex_inputs(
     let header_bytes = email.get_headers().get_raw_bytes();
     let email_body = extract_email_body(&email)?;
 
+    let pdf = get_pdf(&email);
+    let pdf = extract_pdf_content(&pdf);
+
     let body_parts = regex_config
         .body_parts
         .as_ref()
@@ -74,12 +79,19 @@ pub async fn generate_email_with_regex_inputs(
         .filter(|parts| !parts.is_empty())
         .map(|parts| compile_regex_parts(parts, header_bytes))
         .transpose()?;
+    let pdf_parts = regex_config
+        .pdf_parts
+        .as_ref()
+        .filter(|parts| !parts.is_empty())
+        .map(|parts| compile_regex_parts(parts, &pdf.as_bytes()))
+        .transpose()?;
 
     Ok(EmailWithRegex {
         email: email_inputs,
         regex_info: RegexInfo {
             header_parts,
             body_parts,
+            pdf_parts,
         },
     })
 }
