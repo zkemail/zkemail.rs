@@ -68,8 +68,8 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
 
     let regex_matches = header_matches
         .into_iter()
-        .chain(body_matches.into_iter())
-        .chain(pdf_matches.into_iter())
+        .chain(body_matches)
+        .chain(pdf_matches)
         .flatten()
         .collect();
 

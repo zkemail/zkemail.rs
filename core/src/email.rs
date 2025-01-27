@@ -43,6 +43,6 @@ pub fn get_pdf(parsed_email: &ParsedMail) -> Vec<u8> {
         .unwrap()
 }
 
-pub fn extract_pdf_content(pdf: &Vec<u8>) -> String {
+pub fn extract_pdf_content(pdf: &[u8]) -> String {
     pdf_extract::extract_text_from_mem(pdf).unwrap()
 }

@@ -83,7 +83,7 @@ pub async fn generate_email_with_regex_inputs(
         .pdf_parts
         .as_ref()
         .filter(|parts| !parts.is_empty())
-        .map(|parts| compile_regex_parts(parts, &pdf.as_bytes()))
+        .map(|parts| compile_regex_parts(parts, pdf.as_bytes()))
         .transpose()?;
 
     Ok(EmailWithRegex {
