@@ -10,11 +10,21 @@ pub fn verify_email(email: &Email) -> EmailVerifierOutput {
     let logger = Logger::root(Discard, o!());
 
     let verified = verify_dkim(email, &logger);
+    assert!(verified);
 
     EmailVerifierOutput {
         from_domain_hash: hash_bytes(email.from_domain.as_bytes()),
         public_key_hash: hash_bytes(&email.public_key.key),
-        verified,
+        external_inputs: email
+            .external_inputs
+            .iter()
+            .flat_map(|inputs| {
+                vec![
+                    inputs.name.clone(),
+                    inputs.value.clone().expect("Value cannot be null"),
+                ]
+            })
+            .collect(),
     }
 }
 
@@ -26,16 +36,45 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
     let header_bytes = parsed_email.get_headers().get_raw_bytes();
     let email_body = extract_email_body(&parsed_email);
 
-    let (header_regex_verified, header_regex_matches) =
-        process_regex_parts(&input.regex_info.header_parts, header_bytes);
-    let (body_regex_verified, body_regex_matches) =
-        process_regex_parts(&input.regex_info.body_parts, &email_body);
+    let header_matches = input
+        .regex_info
+        .header_parts
+        .as_ref()
+        .map(|parts| process_regex_parts(parts, header_bytes))
+        .map(|(verified, matches)| {
+            assert!(verified);
+            matches
+        });
+
+    let body_matches = input
+        .regex_info
+        .body_parts
+        .as_ref()
+        .map(|parts| process_regex_parts(parts, &email_body))
+        .map(|(verified, matches)| {
+            assert!(verified);
+            matches
+        });
+
+    let pdf_matches = input
+        .regex_info
+        .pdf_parts
+        .as_ref()
+        .map(|parts| process_regex_parts(parts, &email_body))
+        .map(|(verified, matches)| {
+            assert!(verified);
+            matches
+        });
+
+    let regex_matches = header_matches
+        .into_iter()
+        .chain(body_matches)
+        .chain(pdf_matches)
+        .flatten()
+        .collect();
 
     EmailWithRegexVerifierOutput {
         email: email_verifier_output,
-        header_regex_verified,
-        body_regex_verified,
-        header_regex_matches,
-        body_regex_matches,
+        regex_matches,
     }
 }

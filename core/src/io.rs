@@ -1,55 +1,53 @@
-use alloy_sol_types::{sol, SolType};
+use alloy_sol_types::{sol, SolValue};
 
-use crate::{EmailVerifierOutput, EmailWithRegexVerifierOutput};
+use crate::EmailVerifierOutput;
 
 sol!(
-    struct SolEmailVerifierOutput {
+    struct SolEmailOutput {
         bytes32 from_domain_hash;
         bytes32 public_key_hash;
-        bool verified;
+        string[] external_inputs; // [name1, value1, name2, value2, ...]
     }
 
-    struct SolEmailWithRegexVerifierOutput {
-        SolEmailVerifierOutput email;
-        bool header_regex_verified;
-        bool body_regex_verified;
-        string[] header_regex_matches;
-        string[] body_regex_matches;
+    struct SolEmailWithRegexOutput {
+        SolEmailOutput email;
+        string[] matches;
     }
 );
 
-pub fn abi_encode_email_verifier_output(output: &EmailVerifierOutput) -> Vec<u8> {
-    SolEmailVerifierOutput::abi_encode(
-        &(SolEmailVerifierOutput {
-            from_domain_hash: output.from_domain_hash.as_slice().try_into().unwrap(),
-            public_key_hash: output.public_key_hash.as_slice().try_into().unwrap(),
-            verified: output.verified,
-        }),
-    )
+#[derive(Debug)]
+pub enum VerificationOutput {
+    EmailOnly(EmailVerifierOutput),
+    WithRegex {
+        email: EmailVerifierOutput,
+        matches: Vec<String>,
+    },
 }
 
-pub fn abi_encode_email_with_regex_verifier_output(
-    output: &EmailWithRegexVerifierOutput,
-) -> Vec<u8> {
-    SolEmailWithRegexVerifierOutput::abi_encode(
-        &(SolEmailWithRegexVerifierOutput {
-            email: SolEmailVerifierOutput {
-                from_domain_hash: output.email.from_domain_hash.as_slice().try_into().unwrap(),
-                public_key_hash: output.email.public_key_hash.as_slice().try_into().unwrap(),
-                verified: output.email.verified,
-            },
-            header_regex_verified: output.header_regex_verified,
-            body_regex_verified: output.body_regex_verified,
-            header_regex_matches: output
-                .header_regex_matches
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
-            body_regex_matches: output
-                .body_regex_matches
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
-        }),
-    )
+impl VerificationOutput {
+    pub fn from_parts(email: EmailVerifierOutput, matches: Option<Vec<String>>) -> Self {
+        match matches {
+            None => Self::EmailOnly(email),
+            Some(m) => Self::WithRegex { email, matches: m },
+        }
+    }
+
+    pub fn abi_encode(&self) -> Vec<u8> {
+        match self {
+            Self::EmailOnly(email) => SolEmailOutput::abi_encode(&convert_email(email)),
+            Self::WithRegex { email, matches } => (SolEmailWithRegexOutput {
+                email: convert_email(email),
+                matches: matches.clone(),
+            })
+            .abi_encode(),
+        }
+    }
+}
+
+fn convert_email(email: &EmailVerifierOutput) -> SolEmailOutput {
+    SolEmailOutput {
+        from_domain_hash: email.from_domain_hash.as_slice().try_into().unwrap(),
+        public_key_hash: email.public_key_hash.as_slice().try_into().unwrap(),
+        external_inputs: email.external_inputs.clone(),
+    }
 }
