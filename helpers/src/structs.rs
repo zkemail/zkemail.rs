@@ -1,15 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum RegexPattern {
-    Capture {
-        prefix: String,
-        capture: String,
-        suffix: String,
-    },
-    Match {
-        pattern: String,
-    },
+pub struct RegexPattern {
+    pub pattern: String,
+    pub capture_indices: Option<Vec<usize>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

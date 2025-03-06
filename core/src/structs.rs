@@ -23,7 +23,7 @@ pub struct DFA {
 #[derive(Debug)]
 pub struct CompiledRegex {
     pub verify_re: DFA,
-    pub capture_str: Option<String>,
+    pub captures: Option<Vec<String>>,
 }
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]
