@@ -5,8 +5,8 @@ Zero-knowledge proof system for email verification, with support for DKIM signat
 ## Installation
 
 ```toml
-zkemail_core = { git = "https://github.com/zkemail/zkemail.rs" }
-zkemail_helpers = { git = "https://github.com/zkemail/zkemail.rs" }
+zkemail-core = { git = "https://github.com/zkemail/zkemail.rs" }
+zkemail-helpers = { git = "https://github.com/zkemail/zkemail.rs" }
 ```
 
 ### Core (`zkemail_core`)
