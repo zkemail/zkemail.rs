@@ -28,6 +28,7 @@ struct DkimKeyResponse {
     _last_seen_at: DateTime<Utc>,
 }
 
+#[allow(dead_code)]
 fn convert_to_pkcs1(key_b64: &str) -> Result<Vec<u8>> {
     let pkcs8_der = STANDARD.decode(key_b64)?;
     RsaPublicKey::from_public_key_der(&pkcs8_der)?
