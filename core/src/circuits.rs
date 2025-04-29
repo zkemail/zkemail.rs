@@ -1,3 +1,4 @@
+use cfdkim::canonicalize_signed_email;
 use mailparse::parse_mail;
 use slog::{o, Discard, Logger};
 
@@ -31,16 +32,19 @@ pub fn verify_email(email: &Email) -> EmailVerifierOutput {
 pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifierOutput {
     let email_verifier_output = verify_email(&input.email);
 
-    let parsed_email = parse_mail(&input.email.raw_email).unwrap();
+    // let parsed_email = parse_mail(&input.email.raw_email).unwrap();
 
-    let header_bytes = parsed_email.get_headers().get_raw_bytes();
-    let email_body = extract_email_body(&parsed_email);
+    // let header_bytes = parsed_email.get_headers().get_raw_bytes();
+    // let email_body = extract_email_body(&parsed_email);
+
+    let (canonicalized_header, canonicalized_body, _) =
+        canonicalize_signed_email(&input.email.raw_email).unwrap();
 
     let header_matches = input
         .regex_info
         .header_parts
         .as_ref()
-        .map(|parts| process_regex_parts(parts, header_bytes))
+        .map(|parts| process_regex_parts(parts, &canonicalized_header))
         .map(|(verified, matches)| {
             assert!(verified);
             matches
@@ -49,7 +53,7 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
         .regex_info
         .body_parts
         .as_ref()
-        .map(|parts| process_regex_parts(parts, &email_body))
+        .map(|parts| process_regex_parts(parts, &canonicalized_body))
         .map(|(verified, matches)| {
             assert!(verified);
             matches

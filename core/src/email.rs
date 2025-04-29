@@ -29,7 +29,8 @@ pub fn verify_dkim(input: &Email, logger: &Logger) -> bool {
         DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type).unwrap();
 
     let result =
-        verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key).unwrap();
+        verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key, false)
+            .unwrap();
 
     result.with_detail().starts_with("pass")
 }

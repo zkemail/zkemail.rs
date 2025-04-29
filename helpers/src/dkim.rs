@@ -1,10 +1,14 @@
 use anyhow::{anyhow, Result};
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
-use cfdkim::{dns::from_tokio_resolver, public_key::retrieve_public_key};
+use cfdkim::{dns::from_tokio_resolver, public_key::retrieve_public_key, DkimPublicKey};
 use chrono::{DateTime, Utc};
 use reqwest::Client;
-use rsa::{pkcs1::EncodeRsaPublicKey, pkcs8::DecodePublicKey, RsaPublicKey};
+use rsa::{
+    pkcs1::{DecodeRsaPublicKey, EncodeRsaPublicKey},
+    pkcs8::DecodePublicKey,
+    RsaPublicKey,
+};
 use serde::Deserialize;
 use slog::Logger;
 use trust_dns_resolver::{
@@ -45,11 +49,20 @@ pub async fn fetch_dkim_key(
             NameServerConfigGroup::from_ips_clear(&["8.8.8.8".parse()?], 53, true),
         ),
         ResolverOpts::default(),
-    );
+    )?;
     let resolver = from_tokio_resolver(resolver);
 
     match retrieve_public_key(logger, resolver, domain.to_string(), selector.to_string()).await {
-        Ok(public_key) => Ok((public_key.to_vec(), public_key.key_type().to_string())),
+        Ok(public_key) => match public_key {
+            DkimPublicKey::Rsa(rsa_key) => {
+                let key_bytes = rsa_key.to_pkcs1_der()?.as_bytes().to_vec();
+                Ok((key_bytes, "rsa".to_string()))
+            }
+            DkimPublicKey::Ed25519(ed_key) => {
+                let key_bytes = ed_key.to_bytes().to_vec();
+                Ok((key_bytes, "ed25519".to_string()))
+            }
+        },
         Err(_) => {
             // Fallback to archive
             let keys: Vec<DkimKeyResponse> = Client::new()
@@ -84,9 +97,20 @@ pub async fn fetch_dkim_key(
             }
 
             let key_bytes = if key_type == "rsa" {
-                convert_to_pkcs1(&public_key)?
+                let decoded = STANDARD.decode(&public_key)?;
+                RsaPublicKey::from_public_key_der(&decoded)
+                    .or_else(|_| RsaPublicKey::from_pkcs1_der(&decoded))?
+                    .to_pkcs1_der()?
+                    .as_bytes()
+                    .to_vec()
+            } else if key_type == "ed25519" {
+                let decoded = STANDARD.decode(&public_key)?;
+                if decoded.len() != 32 {
+                    return Err(anyhow!("Invalid Ed25519 key length"));
+                }
+                decoded
             } else {
-                STANDARD.decode(&public_key)?
+                return Err(anyhow!("Unsupported key type: {}", key_type));
             };
 
             Ok((key_bytes, key_type))
