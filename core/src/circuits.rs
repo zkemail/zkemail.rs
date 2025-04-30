@@ -1,9 +1,8 @@
 use cfdkim::canonicalize_signed_email;
-use mailparse::parse_mail;
 use slog::{o, Discard, Logger};
 
 use crate::{
-    extract_email_body, hash_bytes, process_regex_parts, verify_dkim, Email, EmailVerifierOutput,
+    hash_bytes, process_regex_parts, verify_dkim, Email, EmailVerifierOutput,
     EmailWithRegex, EmailWithRegexVerifierOutput,
 };
 
