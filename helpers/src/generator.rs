@@ -56,10 +56,6 @@ pub async fn generate_email_with_regex_inputs(
     external_inputs: Option<Vec<ExternalInput>>,
 ) -> Result<EmailWithRegex> {
     let email_inputs = generate_email_inputs(from_domain, raw_email, external_inputs).await?;
-    // let email = mailparse::parse_mail(&email_inputs.raw_email)?;
-
-    // let header_bytes = email.get_headers().get_raw_bytes();
-    // let email_body = extract_email_body(&email)?;
 
     let (canonicalized_header, canonicalized_body, _) = canonicalize_signed_email(raw_email)?;
 
