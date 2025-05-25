@@ -23,13 +23,23 @@ pub fn extract_email_body(parsed_email: &ParsedMail) -> Vec<u8> {
 }
 
 pub fn verify_dkim(input: &Email, logger: &Logger) -> bool {
-    let parsed_email = parse_mail(&input.raw_email).unwrap();
+    // Handle parsing errors gracefully
+    let parsed_email = match parse_mail(&input.raw_email) {
+        Ok(email) => email,
+        Err(_) => return false,
+    };
 
-    let public_key =
-        DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type).unwrap();
+    // Handle key parsing errors gracefully  
+    let public_key = match DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type) {
+        Ok(key) => key,
+        Err(_) => return false,
+    };
 
-    let result =
-        verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key).unwrap();
+    // Handle verification errors gracefully
+    let result = match verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key) {
+        Ok(result) => result,
+        Err(_) => return false,
+    };
 
     result.with_detail().starts_with("pass")
 }
