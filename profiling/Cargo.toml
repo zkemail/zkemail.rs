@@ -1,0 +1,42 @@
+[package]
+name = "zkemail-profiling"
+version = "0.1.0"
+edition = "2021"
+description = "Profiling tools for the zkemail crate"
+
+[dependencies]
+zkemail-core = { path = "../core" }
+zkemail-helpers = { path = "../helpers" }
+criterion = { workspace = true }
+dhat = { workspace = true }
+mailparse = { workspace = true }
+regex-automata = { workspace = true }
+slog = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Binary executables for profiling
+[[bin]]
+name = "email_profiler"
+path = "src/bin/email_profiler.rs"
+
+[[bin]]
+name = "regex_profiler"
+path = "src/bin/regex_profiler.rs"
+
+[[bin]]
+name = "generate_regex_data"
+path = "src/bin/generate_regex_data.rs"
+
+[lib]
+name = "zkemail_profiling"
+path = "src/lib.rs"
+
+# Benchmarks for continuous performance tracking
+[[bench]]
+name = "email_benchmarks"
+harness = false
+
+[[bench]]
+name = "regex_benchmarks" 
+harness = false

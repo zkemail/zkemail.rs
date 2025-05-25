@@ -1,0 +1,35 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=example.com; s=selector;
+	t=1683912345; bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
+	h=From:To:Subject:Date; b=XYZ123
+From: sender@example.com
+To: recipient@example.com
+Subject: Test Email for Benchmarking
+Date: Fri, 12 May 2023 12:34:56 -0700
+Content-Type: multipart/alternative; boundary="----=_boundary"
+
+------=_boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+This is a test email in plain text format.
+Amount: $1,234.56
+Transaction ID: ABC123XYZ
+
+------=_boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Test Email</title>
+</head>
+<body>
+    <p>This is a test email in HTML format.</p>
+    <p>Amount: <strong>$1,234.56</strong></p>
+    <p>Transaction ID: <code>ABC123XYZ</code></p>
+</body>
+</html>
+
+------=_boundary--

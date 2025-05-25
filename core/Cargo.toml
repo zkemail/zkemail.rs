@@ -2,6 +2,7 @@
 name = "zkemail-core"
 version = "0.1.0"
 edition = "2021"
+description = "Core functionality for the zkemail crate"
 
 [features]
 default = []
@@ -11,10 +12,15 @@ risc0 = []
 [dependencies]
 alloy-sol-types = { workspace = true }
 borsh = { workspace = true }
-cfdkim = { workspace = true, features = [] }
+cfdkim = { git = "https://github.com/risc0-labs/dkim", default-features = false }
 mailparse = { workspace = true }
 regex-automata = { workspace = true }
 rsa = { workspace = true }
 serde = { workspace = true }
 sha2 = { workspace = true }
 slog = { workspace = true }
+rayon = { workspace = true }
+
+[dev-dependencies]
+criterion = { workspace = true }
+dhat = { workspace = true }
