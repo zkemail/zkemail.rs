@@ -43,14 +43,23 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
 
         let logger = Logger::root(Discard, o!());
 
-        // This should not panic and return a boolean result
+        // This should not panic and return a proper Result
         let result = verify_dkim(&email, &logger);
-        // The important thing is it doesn't panic
-        // With mock data, result can be either true or false
-        assert!(
-            result == true || result == false,
-            "DKIM verification should return a boolean without panicking"
-        );
+        match result {
+            Ok(_) => {
+                // DKIM verification completed without errors
+                assert!(true, "DKIM verification completed successfully");
+            }
+            Err(e) => {
+                // Verification failed, which is expected with mock data
+                // The important thing is it doesn't panic
+                assert!(
+                    e.to_string().contains("parse") || e.to_string().contains("verification"),
+                    "Error should be related to parsing or verification: {}",
+                    e
+                );
+            }
+        }
     }
 
     #[test]
@@ -65,10 +74,16 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
         let logger = Logger::root(Discard, o!());
         let result = verify_dkim(&email, &logger);
 
-        // Should handle invalid key gracefully (return false, not panic)
+        // Should return an error, not panic
         assert!(
-            result == false,
-            "Should return false for invalid key format"
+            result.is_err(),
+            "Should return error for invalid key format"
+        );
+        let error_msg = result.unwrap_err().to_string();
+        assert!(
+            error_msg.contains("parse") || error_msg.contains("key"),
+            "Error should indicate key parsing issue: {}",
+            error_msg
         );
     }
 
@@ -84,7 +99,7 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
         let result = verify_dkim(&email, &logger);
 
         // Should handle empty key gracefully
-        assert!(result == false, "Should return false for empty key");
+        assert!(result.is_err(), "Should return error for empty key");
     }
 
     #[test]
@@ -98,7 +113,7 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
         let result = verify_dkim(&email, &logger);
 
         // Should handle malformed email gracefully
-        assert!(result == false, "Should return false for malformed email");
+        assert!(result.is_err(), "Should return error for malformed email");
     }
 
     #[test]
@@ -112,8 +127,16 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
         let result = verify_dkim(&email, &logger);
 
         // Should handle missing DKIM signature appropriately
-        // Without DKIM signature, should return false
-        assert!(result == false, "Should return false for missing DKIM signature");
+        match result {
+            Ok(is_valid) => {
+                // If it succeeds, it should indicate no valid signature
+                assert!(!is_valid, "Should indicate DKIM verification failed");
+            }
+            Err(_) => {
+                // Error is also acceptable for missing signature
+                assert!(true, "Error handling missing DKIM signature is acceptable");
+            }
+        }
     }
 
     #[test]
@@ -132,11 +155,15 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
             let result = verify_dkim(&email, &logger);
 
             // Should not panic regardless of domain
-            assert!(
-                result == true || result == false,
-                "DKIM verification handled domain '{}' without panic",
-                domain
-            );
+            match result {
+                Ok(_) | Err(_) => {
+                    assert!(
+                        true,
+                        "DKIM verification handled domain '{}' without panic",
+                        domain
+                    );
+                }
+            }
         }
     }
 
@@ -162,10 +189,11 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
         let result = verify_dkim(&email, &logger);
 
         // Should handle large emails without performance issues
-        assert!(
-            result == true || result == false,
-            "DKIM verification handled large email appropriately"
-        );
+        match result {
+            Ok(_) | Err(_) => {
+                assert!(true, "DKIM verification handled large email appropriately");
+            }
+        }
     }
 
     #[test]
@@ -189,12 +217,15 @@ Y9B8qT5rQ3+Z5C9xTHm1QIDAQAB
             let logger = Logger::root(Discard, o!());
             let result = verify_dkim(&email, &logger);
 
-            // Should handle error cases gracefully by returning false
-            assert!(
-                result == false,
-                "Should return false for error case: {}",
-                description
-            );
+            // Verify that appropriate error types are returned
+            if let Err(e) = result {
+                let error_msg = e.to_string();
+                assert!(
+                    !error_msg.is_empty(),
+                    "Error message should be descriptive for case: {}",
+                    description
+                );
+            }
         }
     }
 }

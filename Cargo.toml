@@ -1,5 +1,5 @@
 [workspace]
-members = [ "core", "helpers" ]
+members = [ "core", "helpers", "profiling" ]
 resolver = "2"
 
 [workspace.dependencies]
@@ -9,8 +9,11 @@ base64 = "0.22.1"
 borsh = { version = "1.5.3", features = ["derive"] }
 chrono = "0.4.39"
 cfdkim = { git = "https://github.com/risc0-labs/dkim", default-features = false }
+criterion = { version = "0.5", features = ["html_reports"] }
+dhat = "0.3"
 log = "0.4.22"
 mailparse = "0.14.0"
+rayon = "1.10"
 regex-automata = "0.4.8"
 reqwest = "0.12.12"
 rsa = "=0.9.6"
@@ -18,7 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.10"
 slog = "2.7.0"
-tokio = "1.42.0"
+tokio = { version = "1.42.0", features = ["full"] }
 trust-dns-resolver = "0.23.2"
 
 zkemail-core = { path = "core" }
@@ -27,9 +30,10 @@ zkemail-helpers = { path = "helpers" }
 [profile.dev]
 opt-level = 3
 
+# Comprehensive release profile optimizations
 [profile.release]
-opt-level = 3       
-debug = false      
-lto = true        
-codegen-units = 1  
-panic = "abort" 
+opt-level = 3       # Maximum optimizations
+debug = true        # Include debug symbols for profiling
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Further optimize at the expense of compile time
+panic = "abort"     # Remove panic unwind code

@@ -88,9 +88,9 @@ fn profile_email_body_extraction(email_data: &[u8]) {
 fn profile_dkim_verification(email: &Email) {
     let logger = Logger::root(Discard, o!());
 
-    profile_cpu_usage("dkim_verification", || {
-        let result = verify_dkim(email, &logger);
-        println!("DKIM verification result: {}", result);
+    profile_cpu_usage("dkim_verification", || match verify_dkim(email, &logger) {
+        Ok(result) => println!("DKIM verification result: {}", result),
+        Err(e) => println!("DKIM verification failed: {}", e),
     });
 }
 

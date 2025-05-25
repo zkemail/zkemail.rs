@@ -2,7 +2,7 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 use mailparse::parse_mail;
 use slog::{o, Discard, Logger};
 use zkemail_core::{
-    extract_email_body, hash_bytes, verify_dkim, verify_email,
+    extract_email_body, hash_bytes, hash_bytes_batch, hash_bytes_concat, verify_dkim, verify_email,
     Email, PublicKey,
 };
 
@@ -67,21 +67,21 @@ fn bench_email_parsing_comprehensive(c: &mut Criterion) {
     group.bench_with_input(
         BenchmarkId::new("small_email", small_email.raw_email.len()),
         &small_email.raw_email,
-        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap_or_else(|_| Default::default())),
+        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap()),
     );
 
     group.throughput(Throughput::Bytes(medium_email.raw_email.len() as u64));
     group.bench_with_input(
         BenchmarkId::new("medium_email", medium_email.raw_email.len()),
         &medium_email.raw_email,
-        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap_or_else(|_| Default::default())),
+        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap()),
     );
 
     group.throughput(Throughput::Bytes(large_email.raw_email.len() as u64));
     group.bench_with_input(
         BenchmarkId::new("large_email", large_email.raw_email.len()),
         &large_email.raw_email,
-        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap_or_else(|_| Default::default())),
+        |b, email_data| b.iter(|| parse_mail(black_box(email_data)).unwrap()),
     );
 
     group.finish();
@@ -90,9 +90,9 @@ fn bench_email_parsing_comprehensive(c: &mut Criterion) {
 /// Benchmark email body extraction across different sizes
 fn bench_email_body_extraction_comprehensive(c: &mut Criterion) {
     let (small_email, medium_email, large_email) = create_test_emails();
-    let small_parsed = parse_mail(&small_email.raw_email).unwrap_or_else(|_| Default::default());
-    let medium_parsed = parse_mail(&medium_email.raw_email).unwrap_or_else(|_| Default::default());
-    let large_parsed = parse_mail(&large_email.raw_email).unwrap_or_else(|_| Default::default());
+    let small_parsed = parse_mail(&small_email.raw_email).unwrap();
+    let medium_parsed = parse_mail(&medium_email.raw_email).unwrap();
+    let large_parsed = parse_mail(&large_email.raw_email).unwrap();
 
     let mut group = c.benchmark_group("email_body_extraction_comprehensive");
 
@@ -133,13 +133,19 @@ fn bench_hash_operations_comprehensive(c: &mut Criterion) {
         b.iter(|| hash_bytes(black_box(&large_email.raw_email)))
     });
 
-    // Individual hash operations for comparison
-    group.bench_function("hash_multiple_individual", |b| {
-        b.iter(|| {
-            let _hash1 = hash_bytes(black_box(&small_email.raw_email));
-            let _hash2 = hash_bytes(black_box(&medium_email.raw_email));
-            let _hash3 = hash_bytes(black_box(&large_email.raw_email));
-        })
+    // Batch hash operations
+    let batch_data = vec![
+        small_email.raw_email.as_slice(),
+        medium_email.raw_email.as_slice(),
+        large_email.raw_email.as_slice(),
+    ];
+
+    group.bench_function("hash_batch_operations", |b| {
+        b.iter(|| hash_bytes_batch(black_box(&batch_data)))
+    });
+
+    group.bench_function("hash_concat_operations", |b| {
+        b.iter(|| hash_bytes_concat(black_box(&batch_data)))
     });
 
     group.finish();

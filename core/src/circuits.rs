@@ -9,8 +9,8 @@ use crate::{
 pub fn verify_email(email: &Email) -> EmailVerifierOutput {
     let logger = Logger::root(Discard, o!());
 
-    let verified = verify_dkim(email, &logger);
-    assert!(verified);
+    let verified = verify_dkim(email, &logger).expect("DKIM verification failed");
+    assert!(verified, "DKIM verification must pass");
 
     EmailVerifierOutput {
         from_domain_hash: hash_bytes(email.from_domain.as_bytes()),
