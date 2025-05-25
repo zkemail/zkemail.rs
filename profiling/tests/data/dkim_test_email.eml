@@ -1,0 +1,54 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20230601;
+	t=1720736578; x=1721341378; bh=ZOdm4sD+AVV+cS1E3wL2lV48Hxfb9mxOLhJ9Vy9MSc0=;
+	h=to:subject:date:from:message-id:mime-version:from:to:cc:subject
+	 :date:message-id:reply-to; b=JyiwJNr9j+HXXP9iK3Qzmq/59YdLiLG5f/DO3qJppW6/XOimwvX+4zDbhCdUMrqf9j
+	 QN+V1148ekf0iCCKUwPLGSfECIorrQWQeVUr/knDXCLIZiPOkUoS41SYbF57vG921GXB
+	 YjGvU1TxRg1Sv0hg8Dp+M3QRETURTvywqoqlRiydeFHeL6GYiKDQd0k09x4cKmIJM/lu
+	 8+ScNcCeCn0O2+vjbPnlZxAdHPKo8fsyPz/2myPnuLKxM9bW7S3YonSmSyovQJ8gKSiQ
+	 M8TiYzzu+M0h9p1kz7OxXeEXGvHBP8rMKq1bOmQsHYVwKD/px2q9GHTvnvfFYt4b3NIL
+	 jgAg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=1e100.net; s=20230601;
+	h=to:subject:date:from:message-id:mime-version:x-gm-message-state
+	 :from:to:cc:subject:date:message-id:reply-to;
+	bh=ZOdm4sD+AVV+cS1E3wL2lV48Hxfb9mxOLhJ9Vy9MSc0=;
+	b=UhekUPyVmNpG3qdqAdZTiudkLq+MCoCX/LkzsRqrBG6SqWZWLmLrUwSy+gOA2+BXUQ
+	 x83xnMqb/fcNsKpJLUCtxwcBQ4oet/eoBgCES7i3ioxZsAKZvgQCpwyPVA55wQtpdVgC
+	 vISRa0amHzQahHyICOoJKX3K2QAJBkqzSjgh0ahoy9BkKCuSrlrzXtHQJODndflZnZ+S
+	 r1SiKguD3w2UbfbyQHSkqxu3RGnRJ0mIr/4m/HJxTYKTBTyH+Th3gNp6UVh8REfQNggc
+	 bFyXdQGtrz7wEAFVn+HiB+imyN9FZhP9Kee4g8E5d6QCVCkVqIMexjWqCfAJo67ecHBm
+	 jssg==
+X-Forwarded-X-Original-For: 192.0.2.1
+From: sender@example.org
+To: receiver@example.org
+Subject: Test Email with DKIM for Benchmarking
+Date: Fri, 12 Jul 2024 12:34:56 -0700
+Content-Type: multipart/alternative; boundary="----=_boundary"
+Message-ID: <000000000000ab67b05fe072d524@mail.example.org>
+
+------=_boundary
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+This is a test email with a DKIM signature for benchmarking.
+Amount: $1,234.56
+Transaction ID: ABC123XYZ
+
+------=_boundary
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Test Email with DKIM</title>
+</head>
+<body>
+    <p>This is a test email with a DKIM signature for benchmarking.</p>
+    <p>Amount: <strong>$1,234.56</strong></p>
+    <p>Transaction ID: <code>ABC123XYZ</code></p>
+</body>
+</html>
+
+------=_boundary--
