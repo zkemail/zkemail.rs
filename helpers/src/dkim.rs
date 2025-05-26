@@ -50,8 +50,9 @@ pub async fn fetch_dkim_key(
             NameServerConfigGroup::from_ips_clear(&["8.8.8.8".parse()?], 53, true),
         ),
         ResolverOpts::default(),
-    )?;
+    );
     let resolver = from_tokio_resolver(resolver);
+
 
     match retrieve_public_key(logger, resolver, domain.to_string(), selector.to_string()).await {
         Ok(public_key) => match public_key {
