@@ -19,7 +19,7 @@ serde_json = "1.0"
 sha2 = "0.10"
 slog = "2.7.0"
 tokio = "1.42.0"
-trust-dns-resolver = "0.22"
+trust-dns-resolver = "0.23"
 
 zkemail-core = { path = "core" }
 zkemail-helpers = { path = "helpers" }
