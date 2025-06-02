@@ -53,7 +53,6 @@ pub async fn fetch_dkim_key(
     );
     let resolver = from_tokio_resolver(resolver);
 
-
     match retrieve_public_key(logger, resolver, domain.to_string(), selector.to_string()).await {
         Ok(public_key) => match public_key {
             DkimPublicKey::Rsa(rsa_key) => {

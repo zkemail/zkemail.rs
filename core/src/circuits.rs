@@ -2,7 +2,8 @@ use cfdkim::canonicalize_signed_email;
 use slog::{o, Discard, Logger};
 
 use crate::{
-    hash_bytes, process_regex_parts, remove_quoted_printable_soft_breaks, verify_dkim, Email, EmailVerifierOutput, EmailWithRegex, EmailWithRegexVerifierOutput
+    hash_bytes, process_regex_parts, remove_quoted_printable_soft_breaks, verify_dkim, Email,
+    EmailVerifierOutput, EmailWithRegex, EmailWithRegexVerifierOutput,
 };
 
 pub fn verify_email(email: &Email) -> EmailVerifierOutput {

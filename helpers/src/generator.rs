@@ -4,7 +4,10 @@ use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
 use zkemail_core::{Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo};
 
-use crate::{dkim::fetch_dkim_key, email::remove_quoted_printable_soft_breaks, regex::compile_regex_parts, RegexConfig};
+use crate::{
+    dkim::fetch_dkim_key, email::remove_quoted_printable_soft_breaks, regex::compile_regex_parts,
+    RegexConfig,
+};
 
 pub async fn generate_email_inputs(
     from_domain: &str,
