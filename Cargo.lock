@@ -474,7 +474,6 @@ dependencies = [
 [[package]]
 name = "cfdkim"
 version = "0.3.3"
-source = "git+https://github.com/zkemail/cfdkim.git#be08e94e2fe4930bb849b6c3c4ec2cbf0c3854d0"
 dependencies = [
  "base64 0.21.7",
  "chrono",

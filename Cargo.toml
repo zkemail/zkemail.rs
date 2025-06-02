@@ -8,7 +8,7 @@ anyhow = "1.0"
 base64 = "0.22.1"
 borsh = { version = "1.5.3", features = ["derive"] }
 chrono = "0.4.39"
-cfdkim = { git = "https://github.com/zkemail/cfdkim.git" }
+cfdkim = { git = "https://github.com/zkemail/cfdkim.git", default-features = false }
 log = "0.4.22"
 mailparse = "0.15"
 regex-automata = "0.4.8"

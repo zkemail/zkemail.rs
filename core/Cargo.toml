@@ -11,7 +11,7 @@ risc0 = []
 [dependencies]
 alloy-sol-types = { workspace = true }
 borsh = { workspace = true }
-cfdkim = { workspace = true }
+cfdkim = { workspace = true, features = [] }
 mailparse = { workspace = true }
 regex-automata = { workspace = true }
 rsa = { workspace = true }

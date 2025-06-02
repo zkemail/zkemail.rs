@@ -2,8 +2,7 @@ use cfdkim::canonicalize_signed_email;
 use slog::{o, Discard, Logger};
 
 use crate::{
-    hash_bytes, process_regex_parts, verify_dkim, Email, EmailVerifierOutput, EmailWithRegex,
-    EmailWithRegexVerifierOutput,
+    hash_bytes, process_regex_parts, remove_quoted_printable_soft_breaks, verify_dkim, Email, EmailVerifierOutput, EmailWithRegex, EmailWithRegexVerifierOutput
 };
 
 pub fn verify_email(email: &Email) -> EmailVerifierOutput {
@@ -34,6 +33,8 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
     let (canonicalized_header, canonicalized_body, _) =
         canonicalize_signed_email(&input.email.raw_email).unwrap();
 
+    let (cleaned_body, _) = remove_quoted_printable_soft_breaks(canonicalized_body);
+
     let header_matches = input
         .regex_info
         .header_parts
@@ -47,7 +48,7 @@ pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifier
         .regex_info
         .body_parts
         .as_ref()
-        .map(|parts| process_regex_parts(parts, &canonicalized_body))
+        .map(|parts| process_regex_parts(parts, &cleaned_body))
         .map(|(verified, matches)| {
             assert!(verified);
             matches
