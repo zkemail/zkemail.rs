@@ -2,12 +2,11 @@ use anyhow::{anyhow, Result};
 use cfdkim::{canonicalize_signed_email, validate_header, verify_email_with_key, DkimPublicKey};
 use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
-use zkemail_core::{Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo};
-
-use crate::{
-    dkim::fetch_dkim_key, email::remove_quoted_printable_soft_breaks, regex::compile_regex_parts,
-    RegexConfig,
+use zkemail_core::{
+    remove_quoted_printable_soft_breaks, Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo,
 };
+
+use crate::{dkim::fetch_dkim_key, regex::compile_regex_parts, RegexConfig};
 
 pub async fn generate_email_inputs(
     from_domain: &str,
@@ -33,6 +32,7 @@ pub async fn generate_email_inputs(
         let selector = dkim_header.get_required_tag("s");
         if let Ok((key, key_type)) = fetch_dkim_key(&logger, from_domain, &selector).await {
             if let Ok(public_key) = DkimPublicKey::try_from_bytes(&key, &key_type) {
+                // TODO: Add ignore body hash feature and remove hardcoded false
                 if let Ok(result) =
                     verify_email_with_key(&logger, from_domain, &email, public_key, false)
                 {

@@ -28,15 +28,6 @@ struct DkimKeyResponse {
     _last_seen_at: DateTime<Utc>,
 }
 
-#[allow(dead_code)]
-fn convert_to_pkcs1(key_b64: &str) -> Result<Vec<u8>> {
-    let pkcs8_der = STANDARD.decode(key_b64)?;
-    RsaPublicKey::from_public_key_der(&pkcs8_der)?
-        .to_pkcs1_der()
-        .map(|der| der.as_bytes().to_vec())
-        .map_err(Into::into)
-}
-
 pub async fn fetch_dkim_key(
     logger: &Logger,
     domain: &str,
