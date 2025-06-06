@@ -54,10 +54,10 @@ pub fn verify_dkim(input: &Email, logger: &Logger) -> bool {
 ///
 /// A tuple of:
 /// - `Vec<u8>`: The cleaned content, with all QP soft line breaks removed and padded with zeros
-///              to match the original length.
+///   to match the original length.
 /// - `Vec<usize>`: A mapping from cleaned indices to original indices. For cleaned indices that
-///                 correspond to actual content, `index_map[i]` gives the original position of
-///                 that byte in `body`. For padded bytes, the value is `usize::MAX`.
+///   correspond to actual content, `index_map[i]` gives the original position of
+///   that byte in `body`. For padded bytes, the value is `usize::MAX`.
 pub fn remove_quoted_printable_soft_breaks(body: Vec<u8>) -> (Vec<u8>, Vec<usize>) {
     let original_len = body.len();
     let mut cleaned = Vec::with_capacity(original_len);
@@ -66,7 +66,7 @@ pub fn remove_quoted_printable_soft_breaks(body: Vec<u8>) -> (Vec<u8>, Vec<usize
     let mut iter = body.iter().enumerate();
     while let Some((i, &byte)) = iter.next() {
         // Check if this is the start of a soft line break sequence `=\r\n`
-        if byte == b'=' && body.get(i + 1..i + 3) == Some(&[b'\r', b'\n']) {
+        if byte == b'=' && body.get(i + 1..i + 3) == Some(b"\r\n") {
             // Skip the next two bytes for the soft line break
             iter.nth(1);
         } else {
@@ -80,7 +80,7 @@ pub fn remove_quoted_printable_soft_breaks(body: Vec<u8>) -> (Vec<u8>, Vec<usize
 
     // Pad index_map with usize::MAX for these padded positions
     let padding_needed = original_len - index_map.len();
-    index_map.extend(std::iter::repeat(usize::MAX).take(padding_needed));
+    index_map.extend(std::iter::repeat_n(usize::MAX, padding_needed));
 
     (cleaned, index_map)
 }
