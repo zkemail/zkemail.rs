@@ -1,12 +1,12 @@
 use anyhow::{anyhow, Result};
-use cfdkim::{validate_header, verify_email_with_key, DkimPublicKey};
+use cfdkim::{canonicalize_signed_email, validate_header, verify_email_with_key, DkimPublicKey};
 use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
-use zkemail_core::{Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo};
-
-use crate::{
-    dkim::fetch_dkim_key, email::extract_email_body, regex::compile_regex_parts, RegexConfig,
+use zkemail_core::{
+    remove_quoted_printable_soft_breaks, Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo,
 };
+
+use crate::{dkim::fetch_dkim_key, regex::compile_regex_parts, RegexConfig};
 
 pub async fn generate_email_inputs(
     from_domain: &str,
@@ -32,7 +32,9 @@ pub async fn generate_email_inputs(
         let selector = dkim_header.get_required_tag("s");
         if let Ok((key, key_type)) = fetch_dkim_key(&logger, from_domain, &selector).await {
             if let Ok(public_key) = DkimPublicKey::try_from_bytes(&key, &key_type) {
-                if let Ok(result) = verify_email_with_key(&logger, from_domain, &email, public_key)
+                // TODO: Add ignore body hash feature and remove hardcoded false
+                if let Ok(result) =
+                    verify_email_with_key(&logger, from_domain, &email, public_key, false)
                 {
                     if result.with_detail().starts_with("pass") {
                         return Ok(Email {
@@ -57,22 +59,22 @@ pub async fn generate_email_with_regex_inputs(
     external_inputs: Option<Vec<ExternalInput>>,
 ) -> Result<EmailWithRegex> {
     let email_inputs = generate_email_inputs(from_domain, raw_email, external_inputs).await?;
-    let email = mailparse::parse_mail(&email_inputs.raw_email)?;
 
-    let header_bytes = email.get_headers().get_raw_bytes();
-    let email_body = extract_email_body(&email)?;
+    let (canonicalized_header, canonicalized_body, _) = canonicalize_signed_email(raw_email)?;
+
+    let (cleaned_body, _) = remove_quoted_printable_soft_breaks(canonicalized_body);
 
     let body_parts = regex_config
         .body_parts
         .as_ref()
         .filter(|parts| !parts.is_empty())
-        .map(|parts| compile_regex_parts(parts, &email_body))
+        .map(|parts| compile_regex_parts(parts, &cleaned_body))
         .transpose()?;
     let header_parts = regex_config
         .header_parts
         .as_ref()
         .filter(|parts| !parts.is_empty())
-        .map(|parts| compile_regex_parts(parts, header_bytes))
+        .map(|parts| compile_regex_parts(parts, &canonicalized_header))
         .transpose()?;
 
     Ok(EmailWithRegex {
