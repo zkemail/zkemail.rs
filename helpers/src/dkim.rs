@@ -71,7 +71,7 @@ pub async fn fetch_dkim_key(
                 })
                 .ok_or_else(|| anyhow!("No valid DKIM key found"))?;
 
-            let (key_type, public_key) = key.value.split(';').map(str::trim).fold(
+            let (mut key_type, public_key) = key.value.split(';').map(str::trim).fold(
                 (String::new(), String::new()),
                 |(mut kt, mut pk), part| {
                     if let Some(stripped) = part.strip_prefix("k=") {
@@ -83,6 +83,11 @@ pub async fn fetch_dkim_key(
                     (kt, pk)
                 },
             );
+
+            // defaults to rsa if no key type is found
+            if key_type.is_empty() {
+                key_type = "rsa".to_string();
+            }
 
             if public_key.is_empty() {
                 return Err(anyhow!("No public key found"));
@@ -107,5 +112,31 @@ pub async fn fetch_dkim_key(
 
             Ok((key_bytes, key_type))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use slog::{o, Drain, Logger};
+
+    fn create_logger() -> Logger {
+        let drain = slog::Discard;
+        let root = Logger::root(drain.fuse(), o!());
+        root
+    }
+
+    #[tokio::test]
+    async fn test_fetch_dkim_key_from_archive() {
+        let logger = create_logger();
+        let domain = "cryptoradar.com";
+        let selector = "ez5fdfeqyxjjof6psrzjbiqfmtoen2xs";
+
+        let result = fetch_dkim_key(&logger, domain, selector).await;
+        assert!(result.is_ok(), "fetch_dkim_key should succeed, but got: {:?}", result.err());
+        
+        let (key_bytes, key_type) = result.unwrap();
+        assert!(!key_bytes.is_empty(), "key bytes should not be empty");
+        assert_eq!(key_type, "rsa", "key type should be rsa for cryptoradar");
     }
 }
