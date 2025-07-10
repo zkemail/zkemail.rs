@@ -133,8 +133,12 @@ mod tests {
         let selector = "ez5fdfeqyxjjof6psrzjbiqfmtoen2xs";
 
         let result = fetch_dkim_key(&logger, domain, selector).await;
-        assert!(result.is_ok(), "fetch_dkim_key should succeed, but got: {:?}", result.err());
-        
+        assert!(
+            result.is_ok(),
+            "fetch_dkim_key should succeed, but got: {:?}",
+            result.err()
+        );
+
         let (key_bytes, key_type) = result.unwrap();
         assert!(!key_bytes.is_empty(), "key bytes should not be empty");
         assert_eq!(key_type, "rsa", "key type should be rsa for cryptoradar");
