@@ -40,8 +40,8 @@ pub fn process_regex_parts(
 
         if let Some(captures) = part.captures.as_ref() {
             for capture in captures.iter() {
-                let matched_str = std::str::from_utf8(&input[matches[0].range()]).unwrap();
-                if !matched_str.contains(capture) || matched_str.matches(capture).count() != 1 {
+                let matched_str = String::from_utf8_lossy(&input[matches[0].range()]);
+                if !matched_str.contains(capture) {
                     return (false, regex_matches);
                 }
                 regex_matches.push(capture.to_string());

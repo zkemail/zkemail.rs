@@ -31,10 +31,10 @@ pub fn compile_regex_parts(parts: &[RegexPattern], input: &[u8]) -> Result<Vec<C
                     .iter()
                     .map(|i| {
                         caps.get_group(*i)
-                            .and_then(|capture| {
-                                String::from_utf8(input[capture.range()].to_vec()).ok()
+                            .map(|capture| {
+                                String::from_utf8_lossy(&input[capture.range()]).into_owned()
                             })
-                            .ok_or_else(|| anyhow!("Capture contains invalid UTF-8 data"))
+                            .ok_or_else(|| anyhow!("Capture group not found"))
                     })
                     .collect();
                 results?
