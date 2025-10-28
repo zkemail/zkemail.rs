@@ -42,9 +42,25 @@ pub fn compile_regex_parts(parts: &[RegexPattern], input: &[u8]) -> Result<Vec<C
                 Vec::new()
             };
 
+            if let Some(max_len) = part.max_length {
+                if let Some((_idx, s)) = captured_strings
+                    .iter()
+                    .enumerate()
+                    .find(|(_, s)| s.len() > max_len)
+                {
+                    return Err(anyhow!(
+                        "Max length exceeded for regex pattern: {:#?}. Captured string: {:?} with length {}",
+                        part,
+                        s,
+                        s.len()
+                    ));
+                }
+            }
+
             Ok(CompiledRegex {
                 verify_re: create_dfa(&verify_dfa_re),
                 captures: Some(captured_strings),
+                max_length: part.max_length,
             })
         })
         .collect()

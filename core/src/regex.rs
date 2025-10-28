@@ -41,8 +41,15 @@ pub fn process_regex_parts(
         if let Some(captures) = part.captures.as_ref() {
             for capture in captures.iter() {
                 let matched_str = String::from_utf8_lossy(&input[matches[0].range()]);
+                // Validate substring presence
                 if !matched_str.contains(capture) {
                     return (false, regex_matches);
+                }
+                // Validate max length
+                if let Some(max_length) = part.max_length {
+                    if capture.len() > max_length {
+                        return (false, regex_matches);
+                    }
                 }
                 regex_matches.push(capture.to_string());
             }
