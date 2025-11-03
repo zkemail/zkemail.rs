@@ -24,6 +24,7 @@ pub struct DFA {
 pub struct CompiledRegex {
     pub verify_re: DFA,
     pub captures: Option<Vec<String>>,
+    pub max_length: Option<usize>,
 }
 
 #[cfg_attr(feature = "risc0", derive(BorshSerialize, BorshDeserialize))]

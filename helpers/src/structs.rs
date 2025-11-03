@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct RegexPattern {
     pub pattern: String,
     pub capture_indices: Option<Vec<usize>>,
+    pub max_length: Option<usize>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
