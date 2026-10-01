@@ -20,3 +20,7 @@ reqwest = { workspace = true, features = ["json"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 trust-dns-resolver = { workspace = true }
 zkemail-core = { workspace = true }
+
+[dev-dependencies]
+httpmock = "0.7"
+rand = "0.8"

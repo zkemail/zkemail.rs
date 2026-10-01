@@ -1,12 +1,13 @@
 use anyhow::{anyhow, Result};
-use cfdkim::{canonicalize_signed_email, validate_header, verify_email_with_key, DkimPublicKey};
+use cfdkim::{validate_header, DkimPublicKey};
 use mailparse::MailHeaderMap;
 use slog::{o, Discard, Logger};
 use zkemail_core::{
-    remove_quoted_printable_soft_breaks, Email, EmailWithRegex, ExternalInput, PublicKey, RegexInfo,
+    canonicalize_verified_email, remove_quoted_printable_soft_breaks, verify_dkim, Email,
+    EmailWithRegex, ExternalInput, PublicKey, RegexInfo,
 };
 
-use crate::{dkim::fetch_dkim_key, regex::compile_regex_parts, RegexConfig};
+use crate::{dkim::fetch_dkim_key_candidates, regex::compile_regex_parts, RegexConfig};
 
 pub async fn generate_email_inputs(
     from_domain: &str,
@@ -21,35 +22,55 @@ pub async fn generate_email_inputs(
         return Err(anyhow!("No DKIM signatures found"));
     }
 
+    let mut errors = Vec::new();
+    let mut tried_selectors = Vec::new();
     for header in dkim_headers.iter() {
         let dkim_header = match validate_header(&String::from_utf8_lossy(header.get_value_raw())) {
-            Ok(h) if h.get_required_tag("d").to_lowercase() == from_domain.to_lowercase() => h,
-            _ => {
-                continue;
-            }
+            Ok(h) if h.get_required_tag("d").eq_ignore_ascii_case(from_domain) => h,
+            _ => continue,
         };
 
         let selector = dkim_header.get_required_tag("s");
-        if let Ok((key, key_type)) = fetch_dkim_key(&logger, from_domain, &selector).await {
-            if let Ok(public_key) = DkimPublicKey::try_from_bytes(&key, &key_type) {
-                // TODO: Add ignore body hash feature and remove hardcoded false
-                if let Ok(result) =
-                    verify_email_with_key(&logger, from_domain, &email, public_key, false)
-                {
-                    if result.with_detail().starts_with("pass") {
-                        return Ok(Email {
-                            from_domain: from_domain.to_string(),
-                            raw_email: raw_email.to_vec(),
-                            public_key: PublicKey { key, key_type },
-                            external_inputs: external_inputs.unwrap_or_default(),
-                        });
-                    }
-                }
+        if tried_selectors.contains(&selector) {
+            continue;
+        }
+        tried_selectors.push(selector.clone());
+
+        // REASON: every candidate key (current DNS key and every archived key for the
+        // selector) is tried, since the signing key may have been rotated out of DNS. The
+        // check is the same one the zkVM program runs (core::verify_dkim), so the key returned
+        // here is one the program accepts.
+        let candidates = match fetch_dkim_key_candidates(&logger, from_domain, &selector).await {
+            Ok(c) => c,
+            Err(e) => {
+                errors.push(format!("s={selector}: {e}"));
+                continue;
+            }
+        };
+        for candidate in candidates {
+            let input = Email {
+                from_domain: from_domain.to_string(),
+                raw_email: raw_email.to_vec(),
+                public_key: PublicKey {
+                    key: candidate.key,
+                    key_type: candidate.key_type,
+                },
+                external_inputs: external_inputs.clone().unwrap_or_default(),
+            };
+            if DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type)
+                .is_ok()
+                && verify_dkim(&input, &logger)
+            {
+                return Ok(input);
             }
         }
+        errors.push(format!("s={selector}: no candidate key verifies"));
     }
 
-    Err(anyhow!("No valid DKIM key found for any signature"))
+    Err(anyhow!(
+        "No valid DKIM key found for any signature from {from_domain} ({})",
+        errors.join("; ")
+    ))
 }
 
 pub async fn generate_email_with_regex_inputs(
@@ -60,7 +81,10 @@ pub async fn generate_email_with_regex_inputs(
 ) -> Result<EmailWithRegex> {
     let email_inputs = generate_email_inputs(from_domain, raw_email, external_inputs).await?;
 
-    let (canonicalized_header, canonicalized_body, _) = canonicalize_signed_email(raw_email)?;
+    // NOTE: must match core::verify_email_with_regex, which runs the regexes over the
+    // verified signature's canonicalization (not the first DKIM-Signature's).
+    let (canonicalized_header, canonicalized_body) =
+        canonicalize_verified_email(&email_inputs, &Logger::root(Discard, o!()));
 
     let (cleaned_body, _) = remove_quoted_printable_soft_breaks(canonicalized_body);
 

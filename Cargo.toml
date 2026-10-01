@@ -8,7 +8,9 @@ anyhow = "1.0"
 base64 = "0.22.1"
 borsh = { version = "1.5.3", features = ["derive"] }
 chrono = "0.4.39"
-cfdkim = { git = "https://github.com/zkemail/cfdkim.git", default-features = false }
+# NOTE: pinned to zkemail/cfdkim#3 (canonicalize_verified_signed_email). Switch back to the
+# default branch once that PR is merged.
+cfdkim = { git = "https://github.com/zkemail/cfdkim.git", rev = "405e9c25253face93e3503330a8a6453e21f7342", default-features = false }
 log = "0.4.22"
 mailparse = "0.15"
 regex-automata = "0.4.8"

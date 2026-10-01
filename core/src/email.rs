@@ -1,5 +1,5 @@
-use cfdkim::{verify_email_with_key, DkimPublicKey};
-use mailparse::{parse_mail, ParsedMail};
+use cfdkim::{canonicalize_verified_signed_email, DkimPublicKey};
+use mailparse::ParsedMail;
 use slog::Logger;
 
 use crate::Email;
@@ -23,16 +23,36 @@ pub fn extract_email_body(parsed_email: &ParsedMail) -> Vec<u8> {
 }
 
 pub fn verify_dkim(input: &Email, logger: &Logger) -> bool {
-    let parsed_email = parse_mail(&input.raw_email).unwrap();
-
+    // NOTE: verify_email_with_key stops at the first DKIM-Signature whose d= matches, so a
+    // message signed twice by the same domain (two selectors/keys) failed whenever the given
+    // key belonged to the second signature. canonicalize_verified_signed_email tries every
+    // signature with d = from_domain and succeeds only if one verifies under this key.
     let public_key =
         DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type).unwrap();
+    canonicalize_verified_signed_email(
+        logger,
+        &input.raw_email,
+        &input.from_domain,
+        public_key,
+        false,
+    )
+    .is_ok()
+}
 
-    let result =
-        verify_email_with_key(logger, &input.from_domain, &parsed_email, public_key, false)
-            .unwrap();
-
-    result.with_detail().starts_with("pass")
+/// Canonicalized (header, body) of the DKIM-Signature with `d=` = `input.from_domain` that
+/// verifies under `input.public_key`. Panics (fails the proof) if there is none.
+pub fn canonicalize_verified_email(input: &Email, logger: &Logger) -> (Vec<u8>, Vec<u8>) {
+    let public_key =
+        DkimPublicKey::try_from_bytes(&input.public_key.key, &input.public_key.key_type).unwrap();
+    let (header, body, _) = canonicalize_verified_signed_email(
+        logger,
+        &input.raw_email,
+        &input.from_domain,
+        public_key,
+        false,
+    )
+    .expect("no DKIM-Signature for from_domain verifies with the given key");
+    (header, body)
 }
 
 // TODO: remove this when using relayer-utils
