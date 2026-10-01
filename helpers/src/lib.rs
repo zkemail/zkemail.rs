@@ -5,6 +5,8 @@ mod generator;
 mod io;
 mod regex;
 mod structs;
+#[cfg(test)]
+mod verified_signature_test;
 
 pub use file::*;
 pub use generator::*;

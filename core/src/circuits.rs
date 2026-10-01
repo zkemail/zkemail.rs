@@ -1,8 +1,8 @@
-use cfdkim::canonicalize_signed_email;
 use slog::{o, Discard, Logger};
 
 use crate::{
-    hash_bytes, process_regex_parts, remove_quoted_printable_soft_breaks, verify_dkim, Email,
+    canonicalize_verified_email, hash_bytes, process_regex_parts,
+    remove_quoted_printable_soft_breaks, verify_dkim, Email,
     EmailVerifierOutput, EmailWithRegex, EmailWithRegexVerifierOutput,
 };
 
@@ -29,10 +29,15 @@ pub fn verify_email(email: &Email) -> EmailVerifierOutput {
 }
 
 pub fn verify_email_with_regex(input: &EmailWithRegex) -> EmailWithRegexVerifierOutput {
+    let logger = Logger::root(Discard, o!());
     let email_verifier_output = verify_email(&input.email);
 
-    let (canonicalized_header, canonicalized_body, _) =
-        canonicalize_signed_email(&input.email.raw_email).unwrap();
+    // REASON: the regexes must run over the header/body of the signature that verify_email
+    // checked. cfdkim's canonicalize_signed_email canonicalizes the FIRST DKIM-Signature, which
+    // need not be the verified one (several signatures on one message are common), and its h=
+    // list can then pull in headers the verified signature does not cover.
+    let (canonicalized_header, canonicalized_body) =
+        canonicalize_verified_email(&input.email, &logger);
 
     let (cleaned_body, _) = remove_quoted_printable_soft_breaks(canonicalized_body);
 
